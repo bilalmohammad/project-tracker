@@ -8,70 +8,67 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-/* Layout: flat app shell — top bar, filter sidebar, main pane with overdue summary then the project table */
+/* Layout: app-shell look — left nav rail, top bar, gray canvas with a white table card (ref: Atlas-style dashboard) */
 :root{
-  --surface:#FFFFFF; --surface-2:#F7F7FB; --line:#E6E6EE; --line-strong:#D6D6E2;
-  --fg:#17171F; --fg-2:#5A5A6E; --fg-3:#8A8A9C;
-  --accent:#5546E8; --accent-soft:#EEECFD; --accent-fg:#FFFFFF;
-  --st-ns:#6B6B80; --st-ns-bg:#F0F0F4;
-  --st-ip:#5546E8; --st-ip-bg:#EEECFD;
-  --st-bl:#C2410C; --st-bl-bg:#FFEEE3;
-  --st-dn:#15803D; --st-dn-bg:#E5F6EA;
-  --danger:#C62828; --danger-bg:#FDECEC;
-  --shadow:0 1px 2px rgba(23,23,40,.04),0 4px 16px rgba(23,23,40,.05);
+  --canvas:#F4F4F8; --sidebar:#FFFFFF; --surface:#FFFFFF; --surface-2:#F6F6FA; --line:#E7E7EF; --line-strong:#D7D7E3;
+  --fg:#16161F; --fg-2:#5F5F72; --fg-3:#92929E;
+  --accent:#6C5CE7; --accent-soft:#EFECFD; --accent-fg:#FFFFFF;
+  --st-ns:#71717E; --st-ns-bg:#EFEFF4;
+  --st-ip:#6C5CE7; --st-ip-bg:#EFECFD;
+  --st-bl:#C2711D; --st-bl-bg:#FDF0E0;
+  --st-dn:#1D9A5D; --st-dn-bg:#E4F7EC;
+  --danger:#D1403A; --danger-bg:#FCEAE9;
+  --shadow:0 1px 2px rgba(22,22,31,.04),0 8px 24px rgba(22,22,31,.06);
   --font:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --surface:#17171F; --surface-2:#1D1D27; --line:#2A2A36; --line-strong:#383846;
+  --canvas:#0C0C12; --sidebar:#131318; --surface:#17171F; --surface-2:#1D1D27; --line:#2A2A36; --line-strong:#383846;
   --fg:#ECECF3; --fg-2:#A9A9BA; --fg-3:#767688;
-  --accent:#8B80FF; --accent-soft:#272447; --accent-fg:#0E0E14;
+  --accent:#8B7CFF; --accent-soft:#272447; --accent-fg:#0E0E14;
   --st-ns:#A9A9BA; --st-ns-bg:#25252F;
   --st-ip:#A39BFF; --st-ip-bg:#272447;
   --st-bl:#FF9B63; --st-bl-bg:#3A2418;
   --st-dn:#5FD08A; --st-dn-bg:#17321F;
   --danger:#FF7B7B; --danger-bg:#3A1C1C;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.3);
   color-scheme:dark;
 }}
 :root[data-theme="dark"]{
-  --surface:#17171F; --surface-2:#1D1D27; --line:#2A2A36; --line-strong:#383846;
+  --canvas:#0C0C12; --sidebar:#131318; --surface:#17171F; --surface-2:#1D1D27; --line:#2A2A36; --line-strong:#383846;
   --fg:#ECECF3; --fg-2:#A9A9BA; --fg-3:#767688;
-  --accent:#8B80FF; --accent-soft:#272447; --accent-fg:#0E0E14;
+  --accent:#8B7CFF; --accent-soft:#272447; --accent-fg:#0E0E14;
   --st-ns:#A9A9BA; --st-ns-bg:#25252F;
   --st-ip:#A39BFF; --st-ip-bg:#272447;
   --st-bl:#FF9B63; --st-bl-bg:#3A2418;
   --st-dn:#5FD08A; --st-dn-bg:#17321F;
   --danger:#FF7B7B; --danger-bg:#3A1C1C;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.3);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{background:var(--surface);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.45;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--canvas);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.45;margin:0;
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
-.app{max-width:1320px;margin:0 auto}
+.app{display:flex;min-height:100%}
+@media (max-width:860px){.app{flex-direction:column}}
 
-/* top bar */
-.top{display:flex;align-items:center;gap:16px;padding:14px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
-.mark{width:30px;height:30px;border-radius:9px;background:var(--accent);display:grid;place-items:center}
+/* sidebar: brand + static nav + live filters, styled like a workspace rail */
+.sidebar{width:248px;flex:none;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;
+  padding:18px 14px calc(18px + env(safe-area-inset-bottom,0px));gap:22px;
+  padding-left:max(14px,env(safe-area-inset-left,0px))}
+@media (max-width:860px){.sidebar{width:auto;border-right:0;border-bottom:1px solid var(--line)}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;padding:2px 6px}
+.mark{width:30px;height:30px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
 .mark svg{width:16px;height:16px;stroke:var(--accent-fg)}
-.search{flex:1 1 220px;max-width:340px;margin-left:auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--surface)}
-.search svg{width:15px;height:15px;stroke:var(--fg-3);flex:none}
-.search input{border:0;outline:0;background:transparent;width:100%;min-width:0}
-.sync{font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:6px;white-space:nowrap}
-.sync i{width:7px;height:7px;border-radius:50%;background:var(--st-dn);display:inline-block}
-.sync.off i{background:var(--st-bl)}
-
-.shell{display:grid;grid-template-columns:232px minmax(0,1fr)}
-@media (max-width:860px){.shell{grid-template-columns:minmax(0,1fr)}}
-
-/* sidebar */
-.side{border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:22px}
-@media (max-width:860px){.side{border-right:0;border-bottom:1px solid var(--line);flex-direction:row;flex-wrap:wrap;gap:16px;padding:14px 18px}}
+.nav{display:flex;flex-direction:column;gap:2px}
+.navitem{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:8px 8px;border-radius:9px;text-align:left;color:var(--fg-2);font-weight:500}
+.navitem svg{width:16px;height:16px;stroke:currentColor;flex:none}
+.navitem.active{background:var(--accent-soft);color:var(--accent)}
 .side h3{margin:0 0 8px 8px;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3)}
 .flist{display:flex;flex-direction:column;gap:2px}
 @media (max-width:860px){.flist{flex-direction:row;flex-wrap:wrap;gap:6px}.side h3{margin-left:2px}}
@@ -83,18 +80,32 @@ button{cursor:pointer}
 .dot{width:8px;height:8px;border-radius:50%;flex:none}
 .av{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex:none;letter-spacing:.02em}
 
+/* content column: top bar + scrollable main */
+.content{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 26px;background:var(--surface);border-bottom:1px solid var(--line);flex-wrap:wrap;
+  padding-right:max(26px,env(safe-area-inset-right,0px))}
+.tabpill{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface-2);border-radius:9px;padding:7px 13px;font-weight:600;font-size:13px;color:var(--fg)}
+.tabpill svg{width:14px;height:14px;stroke:currentColor}
+.search{flex:1 1 220px;max-width:360px;margin-left:12px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--surface-2)}
+.search svg{width:15px;height:15px;stroke:var(--fg-3);flex:none}
+.search input{border:0;outline:0;background:transparent;width:100%;min-width:0}
+.sync{font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:6px;white-space:nowrap;margin-left:auto}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--st-dn);display:inline-block}
+.sync.off i{background:var(--st-bl)}
+
 /* main */
-.main{padding:24px 26px 30px;min-width:0;display:flex;flex-direction:column;gap:20px}
-@media (max-width:600px){.main{padding:18px 16px 24px}}
+.main{padding:22px 26px 30px;min-width:0;display:flex;flex-direction:column;gap:18px;
+  padding-right:max(26px,env(safe-area-inset-right,0px));padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+@media (max-width:600px){.main{padding:16px 16px 24px}}
 .head{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
-.head h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.head h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
 .head p{margin:4px 0 0;color:var(--fg-2)}
 .head .acts{margin-left:auto;display:flex;gap:8px}
-.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--surface);border-radius:11px;padding:8px 14px;font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:8px 14px;font-weight:500}
 .btn:hover{background:var(--surface-2)}
 .btn svg{width:15px;height:15px;stroke:currentColor}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
-.btn.primary:hover{filter:brightness(1.07)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600;box-shadow:0 1px 2px rgba(108,92,231,.25),0 4px 10px rgba(108,92,231,.22)}
+.btn.primary:hover{filter:brightness(1.06)}
 .btn.danger{color:var(--danger);border-color:var(--danger-bg);background:var(--danger-bg)}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 
@@ -102,11 +113,11 @@ button{cursor:pointer}
 .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.6fr);gap:12px}
 @media (max-width:1060px){.summary{grid-template-columns:repeat(4,minmax(0,1fr))}.overdue{grid-column:1/-1}}
 @media (max-width:520px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.stat{border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--surface);text-align:left}
+.stat{border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--surface);text-align:left;box-shadow:var(--shadow)}
 .stat:hover{border-color:var(--line-strong)}
 .stat .lbl{display:flex;align-items:center;gap:7px;color:var(--fg-2);font-size:12.5px}
 .stat .val{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
-.overdue{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surface);min-width:0}
+.overdue{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surface);min-width:0;box-shadow:var(--shadow)}
 .overdue.has{border-color:color-mix(in srgb,var(--danger) 35%,var(--line));background:color-mix(in srgb,var(--danger-bg) 55%,var(--surface))}
 .overdue.soon{border-color:color-mix(in srgb,var(--st-bl) 35%,var(--line));background:color-mix(in srgb,var(--st-bl-bg) 55%,var(--surface))}
 .overdue .lbl{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px}
@@ -141,29 +152,32 @@ button{cursor:pointer}
 .filterbar{display:flex;align-items:center;justify-content:flex-end}
 .clear{border:0;background:transparent;color:var(--accent);font-size:13px;font-weight:500;padding:6px 4px}
 
-/* pills */
-.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:500;white-space:nowrap}
-.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.s-not_started{color:var(--st-ns);background:var(--st-ns-bg)}
-.s-in_progress{color:var(--st-ip);background:var(--st-ip-bg)}
-.s-blocked{color:var(--st-bl);background:var(--st-bl-bg)}
-.s-done{color:var(--st-dn);background:var(--st-dn-bg)}
-.prio{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--fg-2);white-space:nowrap}
-.prio svg{width:13px;height:13px}
+/* status: icon + colored label, no pill fill (matches the reference's Ongoing/Completed/In review look) */
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;white-space:nowrap;color:var(--fg)}
+.pill svg{width:16px;height:16px;flex:none}
+.s-not_started{color:var(--st-ns)}
+.s-in_progress{color:var(--st-ip)}
+.s-blocked{color:var(--st-bl)}
+.s-done{color:var(--st-dn)}
+@media (prefers-reduced-motion:no-preference){.s-in_progress svg{animation:spin 1.6s linear infinite;transform-origin:center}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.prio{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--fg);white-space:nowrap}
+.prio svg{width:14px;height:14px}
 .p-high svg{fill:var(--danger);stroke:var(--danger)}
 .p-medium svg{fill:var(--st-bl);stroke:var(--st-bl)}
 .p-low svg{fill:none;stroke:var(--fg-3)}
 
 /* table */
-.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
-table{width:100%;border-collapse:collapse;min-width:780px}
-th{text-align:left;font-weight:500;color:var(--fg-2);font-size:12.5px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;min-width:820px}
+th{text-align:left;font-weight:600;color:var(--fg-3);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
 th button{border:0;background:transparent;padding:0;color:inherit;font-weight:inherit;display:inline-flex;gap:4px;align-items:center}
 th button[data-active="true"]{color:var(--fg)}
-td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
 tbody tr:last-child td{border-bottom:0}
 tbody tr{cursor:pointer}
 tbody tr:hover td{background:var(--surface-2)}
+.rowid{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--fg-3);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:2px 7px;margin-bottom:5px;letter-spacing:.02em}
 .tname{font-weight:600}
 .tnotes{color:var(--fg-3);font-size:12.5px;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .owner{display:flex;align-items:center;gap:8px;white-space:nowrap}
@@ -201,7 +215,8 @@ tbody tr:hover td{background:var(--surface-2)}
 .x svg{width:18px;height:18px;stroke:currentColor}
 form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1}
 .field{display:flex;flex-direction:column;gap:6px}
-.field label{font-size:12.5px;font-weight:600;color:var(--fg-2)}
+.field label{font-size:12.5px;font-weight:600;color:var(--fg-2);display:flex;align-items:center;gap:6px}
+.field label svg{width:13px;height:13px;stroke:currentColor;color:var(--fg-3);flex:none}
 .field input,.field select,.field textarea{border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:9px 11px;width:100%}
 .field textarea{min-height:120px;resize:vertical}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -216,16 +231,20 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
 <body>
 
 <div class="app">
-  <div class="top">
+  <aside class="sidebar">
     <div class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M5 6h14M5 12h9M5 18h5"/></svg></span>Project Tracker</div>
-    <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search projects or notes" aria-label="Search projects"></label>
-    <span class="sync" id="sync"><i></i><span>Connecting…</span></span>
-  </div>
-  <div class="shell">
-    <aside class="side">
-      <div><h3>Owner</h3><div class="flist" id="ownerFilters"></div></div>
-      <div><h3>Status</h3><div class="flist" id="statusFilters"></div></div>
-    </aside>
+    <nav class="nav">
+      <button class="navitem active" type="button"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</button>
+    </nav>
+    <div><h3>Owner</h3><div class="flist" id="ownerFilters"></div></div>
+    <div><h3>Status</h3><div class="flist" id="statusFilters"></div></div>
+  </aside>
+  <div class="content">
+    <div class="topbar">
+      <span class="tabpill"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Projects</span>
+      <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Find a project" aria-label="Search projects"></label>
+      <span class="sync" id="sync"><i></i><span>Connecting…</span></span>
+    </div>
     <main class="main">
       <div class="head">
         <div><h1>Team projects</h1><p id="subline">Shared with everyone who has this link.</p></div>
@@ -243,26 +262,26 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
 
 <div class="scrim" id="scrim" hidden>
   <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="edTitle">
-    <header><h2 id="edTitle">New project</h2><button class="x" id="edClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+    <header><span class="rowid" id="edId" hidden></span><h2 id="edTitle">New project</h2><button class="x" id="edClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
     <form class="fields" id="edForm" novalidate>
       <div class="field"><label for="f-name">Project name</label><input id="f-name" maxlength="140" required></div>
       <div class="row2">
-        <div class="field"><label for="f-owner">Owner</label><input id="f-owner" list="ownerList" maxlength="60" placeholder="Name"><datalist id="ownerList"></datalist></div>
-        <div class="field"><label for="f-due">Due date</label><input id="f-due" type="date"></div>
+        <div class="field"><label for="f-owner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>Owner</label><input id="f-owner" list="ownerList" maxlength="60" placeholder="Name"><datalist id="ownerList"></datalist></div>
+        <div class="field"><label for="f-due"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>Due date</label><input id="f-due" type="date"></div>
       </div>
       <div class="row2">
-        <div class="field"><label for="f-status">Status</label><select id="f-status"></select></div>
-        <div class="field"><label for="f-prio">Priority</label><select id="f-prio"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        <div class="field"><label for="f-status"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v4.8l3 1.7"/></svg>Status</label><select id="f-status"></select></div>
+        <div class="field"><label for="f-prio"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>Priority</label><select id="f-prio"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
       </div>
       <div class="field">
-        <label>Tasks</label>
+        <label><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12.5 2 2 5-5"/></svg>Tasks</label>
         <div class="subtasks" id="subtaskList"></div>
         <div class="subtask-add">
           <input id="f-subtask-new" type="text" maxlength="200" placeholder="Add a task">
           <button class="btn" id="subtaskAddBtn" type="button">Add</button>
         </div>
       </div>
-      <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" maxlength="4000" placeholder="Context, links, next steps"></textarea></div>
+      <div class="field"><label for="f-notes"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/></svg>Notes</label><textarea id="f-notes" maxlength="4000" placeholder="Context, links, next steps"></textarea></div>
       <p class="err" id="edErr" hidden></p>
     </form>
     <div class="stamp" id="edStamp"></div>
@@ -291,6 +310,12 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
     {id:"done", label:"Done", color:"var(--st-dn)"},
   ];
   const SL = Object.fromEntries(STATUSES.map(s => [s.id, s]));
+  const STATUS_ICON = {
+    not_started: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="8.5"/></svg>`,
+    in_progress: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5"/></svg>`,
+    blocked: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2 20h20L12 3.5Z"/><path d="M12 9.5v4.2M12 16.8h.01"/></svg>`,
+    done: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.3 2.4 2.4 4.6-5"/></svg>`,
+  };
   const PRIO = {high:{label:"High",rank:0}, medium:{label:"Medium",rank:1}, low:{label:"Low",rank:2}};
   const AV = ["#5546E8","#0E8A6E","#C2410C","#B4237A","#2563EB","#7C3AED","#0F766E","#A16207"];
   const $ = s => document.querySelector(s);
@@ -320,7 +345,7 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   const avColor = n => { let h = 0; for (const c of (n||"")) h = (h*31 + c.charCodeAt(0)) >>> 0; return AV[h % AV.length]; };
   const avatar = n => n ? `<span class="av" style="background:${avColor(n)}">${esc(initials(n))}</span>` : `<span class="av" style="background:var(--fg-3)">?</span>`;
   const prioHtml = p => { const k = PRIO[p] ? p : "medium"; return `<span class="prio p-${k}"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>${PRIO[k].label}</span>`; };
-  const pill = s => `<span class="pill s-${esc(SL[s] ? s : "not_started")}">${esc((SL[s]||SL.not_started).label)}</span>`;
+  const pill = s => { const k = SL[s] ? s : "not_started"; return `<span class="pill s-${k}">${STATUS_ICON[k]}${esc(SL[k].label)}</span>`; };
   const dueHtml = p => {
     if (!p.due) return `<span class="due" style="color:var(--fg-3)">No date</span>`;
     if (isLate(p)) { const d = dayDiff(todayStr(), p.due); return `<span class="due late">${esc(fmtDate(p.due))}<small>${d}d overdue</small></span>`; }
@@ -330,7 +355,11 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
 
   function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2200); }
   function setSync(ok, text){ const s = $("#sync"); s.classList.toggle("off", !ok); s.querySelector("span").textContent = text; }
-  const mapRow = r => ({ id: r.id, name: r.name, owner: r.owner, due: r.due || "", status: r.status, priority: r.priority, notes: r.notes || "", subtasks: Array.isArray(r.subtasks) ? r.subtasks : [], updatedAt: r.updated_at ? Date.parse(r.updated_at) : null });
+  const mapRow = r => ({ id: r.id, name: r.name, owner: r.owner, due: r.due || "", status: r.status, priority: r.priority, notes: r.notes || "", subtasks: Array.isArray(r.subtasks) ? r.subtasks : [], createdAt: r.created_at ? Date.parse(r.created_at) : 0, updatedAt: r.updated_at ? Date.parse(r.updated_at) : null });
+  function projectIds(){
+    const sorted = [...state.projects].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    return new Map(sorted.map((p, i) => [p.id, "PT-" + (i + 1)]));
+  }
 
   function owners(){
     const m = new Map();
@@ -394,22 +423,23 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
     return `<div class="empty"><h2>No matches</h2><p>No projects match these filters.</p><button class="btn" type="button" data-clear>Clear filters</button></div>`;
   }
 
-  function renderList(list){
+  function renderList(list, idMap){
     if (!list.length) return emptyState();
     const cols = [["name","Project"],["status","Status"],["owner","Owner"],["priority","Priority"],["due","Due"]];
     const th = cols.map(([k,l]) => `<th><button type="button" data-sort="${k}" data-active="${state.sort.key === k}">${l}${state.sort.key === k ? (state.sort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`).join("");
     const rows = list.map(p => {
       const { done, total } = subProgress(p);
       const prog = total ? `<div class="subprog"><div class="bar"><span style="width:${Math.round(done/total*100)}%"></span></div><span class="cnt">${done}/${total}</span></div>` : "";
-      return `<tr data-open="${esc(p.id)}" tabindex="0"><td data-label="Project"><div class="tname">${esc(p.name)}</div>${p.notes ? `<div class="tnotes">${esc(p.notes)}</div>` : ""}${prog}</td><td data-label="Status">${pill(p.status)}</td><td data-label="Owner"><span class="owner">${avatar(p.owner)}${esc(p.owner || "Unassigned")}</span></td><td data-label="Priority">${prioHtml(p.priority)}</td><td data-label="Due">${dueHtml(p)}</td></tr>`;
+      return `<tr data-open="${esc(p.id)}" tabindex="0"><td data-label="Project"><span class="rowid">${idMap.get(p.id)}</span><div class="tname">${esc(p.name)}</div>${p.notes ? `<div class="tnotes">${esc(p.notes)}</div>` : ""}${prog}</td><td data-label="Status">${pill(p.status)}</td><td data-label="Owner"><span class="owner">${avatar(p.owner)}${esc(p.owner || "Unassigned")}</span></td><td data-label="Priority">${prioHtml(p.priority)}</td><td data-label="Due">${dueHtml(p)}</td></tr>`;
     }).join("");
     return `<div class="tablewrap"><table><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
   function render(){
     renderFilters(); renderSummary();
+    const idMap = projectIds();
     const list = filtered();
-    $("#view").innerHTML = renderList(list);
+    $("#view").innerHTML = renderList(list, idMap);
     $("#newBtn").disabled = !state.canWrite || !state.sb;
   }
 
@@ -454,6 +484,7 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   function openEditor(p, status){
     state.editing = p ? p.id : null; pendingDelete = false;
     $("#edTitle").textContent = p ? "Edit project" : "New project";
+    const idEl = $("#edId"); if (p) { idEl.textContent = projectIds().get(p.id) || ""; idEl.hidden = false; } else idEl.hidden = true;
     $("#f-name").value = p?.name || ""; $("#f-owner").value = p?.owner || (state.owner && state.owner !== "__none" ? state.owner : "");
     $("#f-due").value = p?.due || ""; $("#f-status").value = p?.status || status || "not_started";
     $("#f-prio").value = p?.priority || "medium"; $("#f-notes").value = p?.notes || "";
@@ -481,10 +512,18 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
     const row = { name, owner: $("#f-owner").value.trim(), due: $("#f-due").value || null, status: $("#f-status").value, priority: $("#f-prio").value, notes: $("#f-notes").value.trim(), subtasks, updated_at: new Date().toISOString() };
     $("#edSave").disabled = true;
     try {
-      const { error } = state.editing
-        ? await state.sb.from("projects").update(row).eq("id", state.editing)
-        : await state.sb.from("projects").insert([row]);
+      const { data, error } = state.editing
+        ? await state.sb.from("projects").update(row).eq("id", state.editing).select()
+        : await state.sb.from("projects").insert([row]).select();
       if (error) throw error;
+      // Update the local view immediately: the realtime subscription may still be
+      // connecting on a very fresh page load, so don't wait on it for our own write.
+      if (data && data[0]) {
+        const saved = mapRow(data[0]);
+        const i = state.projects.findIndex(p => p.id === saved.id);
+        if (i === -1) state.projects.push(saved); else state.projects[i] = saved;
+        render();
+      }
       closeEditor(); toast(state.editing ? "Project updated" : "Project added");
     } catch (e) { showErr(dbErr(e)); }
     finally { $("#edSave").disabled = false; }
@@ -494,6 +533,8 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
     try {
       const { error } = await state.sb.from("projects").delete().eq("id", state.editing);
       if (error) throw error;
+      state.projects = state.projects.filter(p => p.id !== state.editing);
+      render();
       closeEditor(); toast("Project deleted");
     } catch (e) { showErr(dbErr(e)); }
   }
