@@ -5,31 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Team Project Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 /* Layout: app-shell look — left nav rail, top bar, gray canvas with a white table card (ref: Atlas-style dashboard) */
 :root{
-  --canvas:#F4F4F8; --sidebar:#FFFFFF; --surface:#FFFFFF; --surface-2:#F6F6FA; --line:#E7E7EF; --line-strong:#D7D7E3;
-  --fg:#16161F; --fg-2:#5F5F72; --fg-3:#92929E;
-  --accent:#6C5CE7; --accent-soft:#EFECFD; --accent-fg:#FFFFFF;
-  --st-ns:#71717E; --st-ns-bg:#EFEFF4;
-  --st-ip:#6C5CE7; --st-ip-bg:#EFECFD;
-  --st-bl:#C2711D; --st-bl-bg:#FDF0E0;
-  --st-dn:#1D9A5D; --st-dn-bg:#E4F7EC;
-  --danger:#D1403A; --danger-bg:#FCEAE9;
-  --shadow:0 1px 2px rgba(22,22,31,.04),0 8px 24px rgba(22,22,31,.06);
-  --font:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --canvas:#F6F6F6; --sidebar:#FFFFFF; --surface:#FFFFFF; --surface-2:#F6F6FA; --line:#E7E7EB; --line-strong:#D7D7DE;
+  --fg:#101014; --fg-2:#5F5F68; --fg-3:#8E8E98;
+  --accent:#7B62FF; --accent-soft:#EEEBFC; --accent-fg:#FFFFFF;
+  --st-ns:#9CA3AF; --st-ns-bg:#F1F1F3;
+  --st-ip:#7B62FF; --st-ip-bg:#EEEBFC;
+  --st-bl:#F2994A; --st-bl-bg:#FFF4E6;
+  --st-dn:#3EBF55; --st-dn-bg:#E6F9EA;
+  --danger:#E5484D; --danger-bg:#FDECEC;
+  --shadow:0 1px 2px rgba(16,16,20,.04),0 8px 24px rgba(16,16,20,.06);
+  --font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --canvas:#0C0C12; --sidebar:#131318; --surface:#17171F; --surface-2:#1D1D27; --line:#2A2A36; --line-strong:#383846;
   --fg:#ECECF3; --fg-2:#A9A9BA; --fg-3:#767688;
-  --accent:#8B7CFF; --accent-soft:#272447; --accent-fg:#0E0E14;
+  --accent:#9484FF; --accent-soft:#282147; --accent-fg:#0E0E14;
   --st-ns:#A9A9BA; --st-ns-bg:#25252F;
-  --st-ip:#A39BFF; --st-ip-bg:#272447;
-  --st-bl:#FF9B63; --st-bl-bg:#3A2418;
-  --st-dn:#5FD08A; --st-dn-bg:#17321F;
+  --st-ip:#9484FF; --st-ip-bg:#282147;
+  --st-bl:#FFB366; --st-bl-bg:#3A2A14;
+  --st-dn:#5FD47A; --st-dn-bg:#15321E;
   --danger:#FF7B7B; --danger-bg:#3A1C1C;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.3);
   color-scheme:dark;
@@ -37,11 +37,11 @@
 :root[data-theme="dark"]{
   --canvas:#0C0C12; --sidebar:#131318; --surface:#17171F; --surface-2:#1D1D27; --line:#2A2A36; --line-strong:#383846;
   --fg:#ECECF3; --fg-2:#A9A9BA; --fg-3:#767688;
-  --accent:#8B7CFF; --accent-soft:#272447; --accent-fg:#0E0E14;
+  --accent:#9484FF; --accent-soft:#282147; --accent-fg:#0E0E14;
   --st-ns:#A9A9BA; --st-ns-bg:#25252F;
-  --st-ip:#A39BFF; --st-ip-bg:#272447;
-  --st-bl:#FF9B63; --st-bl-bg:#3A2418;
-  --st-dn:#5FD08A; --st-dn-bg:#17321F;
+  --st-ip:#9484FF; --st-ip-bg:#282147;
+  --st-bl:#FFB366; --st-bl-bg:#3A2A14;
+  --st-dn:#5FD47A; --st-dn-bg:#15321E;
   --danger:#FF7B7B; --danger-bg:#3A1C1C;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.3);
   color-scheme:dark;
@@ -78,7 +78,7 @@ button{cursor:pointer}
 .fitem .n{margin-left:auto;font-size:12px;color:var(--fg-3);font-variant-numeric:tabular-nums;padding-left:8px}
 @media (max-width:860px){.fitem{border:1px solid var(--line);border-radius:999px;padding:5px 10px}}
 .dot{width:8px;height:8px;border-radius:50%;flex:none}
-.av{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex:none;letter-spacing:.02em}
+.av{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:10.5px;font-weight:700;color:#fff;flex:none;letter-spacing:.02em}
 
 /* content column: top bar + scrollable main */
 .content{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -153,33 +153,33 @@ button{cursor:pointer}
 .clear{border:0;background:transparent;color:var(--accent);font-size:13px;font-weight:500;padding:6px 4px}
 
 /* status: icon + colored label, no pill fill (matches the reference's Ongoing/Completed/In review look) */
-.pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;white-space:nowrap;color:var(--fg)}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:400;white-space:nowrap;color:var(--fg)}
 .pill svg{width:16px;height:16px;flex:none}
-.s-not_started{color:var(--st-ns)}
-.s-in_progress{color:var(--st-ip)}
-.s-blocked{color:var(--st-bl)}
-.s-done{color:var(--st-dn)}
 @media (prefers-reduced-motion:no-preference){.s-in_progress svg{animation:spin 1.6s linear infinite;transform-origin:center}}
 @keyframes spin{to{transform:rotate(360deg)}}
-.prio{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--fg);white-space:nowrap}
-.prio svg{width:14px;height:14px}
-.p-high svg{fill:var(--danger);stroke:var(--danger)}
-.p-medium svg{fill:var(--st-bl);stroke:var(--st-bl)}
-.p-low svg{fill:none;stroke:var(--fg-3)}
+.prio{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--fg);white-space:nowrap}
+.prio svg{width:14px;height:12px;flex:none}
 
 /* table */
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
 table{width:100%;border-collapse:collapse;min-width:820px}
-th{text-align:left;font-weight:600;color:var(--fg-3);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{text-align:left;font-weight:400;color:var(--fg-2);font-size:13.5px;padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
 th button{border:0;background:transparent;padding:0;color:inherit;font-weight:inherit;display:inline-flex;gap:4px;align-items:center}
 th button[data-active="true"]{color:var(--fg)}
 td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
 tbody tr:last-child td{border-bottom:0}
 tbody tr{cursor:pointer}
 tbody tr:hover td{background:var(--surface-2)}
-.rowid{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--fg-3);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:2px 7px;margin-bottom:5px;letter-spacing:.02em}
-.tname{font-weight:600}
-.tnotes{color:var(--fg-3);font-size:12.5px;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.projcell{display:flex;align-items:flex-start;gap:11px}
+.rowcheck{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line-strong);background:var(--surface);flex:none;display:grid;place-items:center;margin-top:1px;padding:0}
+.rowcheck:hover{border-color:var(--accent)}
+.rowcheck.done{background:var(--accent);border-color:var(--accent)}
+.rowcheck svg{width:12px;height:12px;stroke:#fff;stroke-width:2.6;opacity:0}
+.rowcheck.done svg{opacity:1}
+.projtext{min-width:0;flex:1}
+.rowid{font-family:var(--mono);font-size:12.5px;color:var(--fg-3);margin-right:8px;letter-spacing:.01em}
+.tname{font-weight:500;display:inline}
+.tnotes{color:var(--fg-3);font-size:12.5px;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 .owner{display:flex;align-items:center;gap:8px;white-space:nowrap}
 .due{white-space:nowrap;font-variant-numeric:tabular-nums}
 .due.late{color:var(--danger);font-weight:600}
@@ -311,13 +311,18 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   ];
   const SL = Object.fromEntries(STATUSES.map(s => [s.id, s]));
   const STATUS_ICON = {
-    not_started: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="8.5"/></svg>`,
-    in_progress: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5"/></svg>`,
-    blocked: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2 20h20L12 3.5Z"/><path d="M12 9.5v4.2M12 16.8h.01"/></svg>`,
-    done: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.3 2.4 2.4 4.6-5"/></svg>`,
+    // "Ongoing" style: an outline dashed spinner (the one icon that isn't a filled circle)
+    not_started: `<svg viewBox="0 0 24 24" fill="var(--st-ns)" stroke="none"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="8" r="1.15" fill="#fff"/><rect x="10.9" y="10.6" width="2.2" height="6" rx="1.1" fill="#fff"/></svg>`,
+    in_progress: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--st-ip)" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1.4 2.6"><circle cx="12" cy="12" r="8.2"/></svg>`,
+    blocked: `<svg viewBox="0 0 24 24" fill="var(--st-bl)" stroke="none"><circle cx="12" cy="12" r="9"/><path fill="#fff" d="M12 6.2a1 1 0 0 1 1 1v6.1a1 1 0 1 1-2 0V7.2a1 1 0 0 1 1-1Zm0 10.4a1.05 1.05 0 1 1 0 2.1 1.05 1.05 0 0 1 0-2.1Z"/></svg>`,
+    done: `<svg viewBox="0 0 24 24" fill="var(--st-dn)" stroke="none"><circle cx="12" cy="12" r="9"/><path fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="m7.8 12.3 2.6 2.6 5.3-5.6"/></svg>`,
+  };
+  const PRIO_BAR = level => { // 3 ascending bars, fading as height increases — more bars solid = higher urgency
+    const cfg = { high: { op: [1, 1, 1], c: "var(--danger)" }, medium: { op: [1, .55, .22], c: "var(--st-bl)" }, low: { op: [1, .45, .18], c: "var(--st-dn)" } }[level] || { op: [1, .55, .22], c: "var(--st-bl)" };
+    return `<svg viewBox="0 0 20 16" fill="${cfg.c}" style="color:${cfg.c}"><rect x="1" y="9" width="3.4" height="6" rx="1" opacity="${cfg.op[0]}"/><rect x="8.3" y="5" width="3.4" height="10" rx="1" opacity="${cfg.op[1]}"/><rect x="15.6" y="1" width="3.4" height="14" rx="1" opacity="${cfg.op[2]}"/></svg>`;
   };
   const PRIO = {high:{label:"High",rank:0}, medium:{label:"Medium",rank:1}, low:{label:"Low",rank:2}};
-  const AV = ["#5546E8","#0E8A6E","#C2410C","#B4237A","#2563EB","#7C3AED","#0F766E","#A16207"];
+  const AV = ["#5B9BD5","#E8956B","#5FAE7E","#D4708F","#8C7AE6","#4FA3A3","#D4A24C","#7E8CE0"];
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -344,7 +349,7 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   const initials = n => (n||"?").trim().split(/\s+/).slice(0,2).map(w => w[0]).join("").toUpperCase() || "?";
   const avColor = n => { let h = 0; for (const c of (n||"")) h = (h*31 + c.charCodeAt(0)) >>> 0; return AV[h % AV.length]; };
   const avatar = n => n ? `<span class="av" style="background:${avColor(n)}">${esc(initials(n))}</span>` : `<span class="av" style="background:var(--fg-3)">?</span>`;
-  const prioHtml = p => { const k = PRIO[p] ? p : "medium"; return `<span class="prio p-${k}"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>${PRIO[k].label}</span>`; };
+  const prioHtml = p => { const k = PRIO[p] ? p : "medium"; return `<span class="prio p-${k}">${PRIO_BAR(k)}${PRIO[k].label}</span>`; };
   const pill = s => { const k = SL[s] ? s : "not_started"; return `<span class="pill s-${k}">${STATUS_ICON[k]}${esc(SL[k].label)}</span>`; };
   const dueHtml = p => {
     if (!p.due) return `<span class="due" style="color:var(--fg-3)">No date</span>`;
@@ -427,10 +432,12 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
     if (!list.length) return emptyState();
     const cols = [["name","Project"],["status","Status"],["owner","Owner"],["priority","Priority"],["due","Due"]];
     const th = cols.map(([k,l]) => `<th><button type="button" data-sort="${k}" data-active="${state.sort.key === k}">${l}${state.sort.key === k ? (state.sort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`).join("");
+    const checkIcon = `<svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>`;
     const rows = list.map(p => {
       const { done, total } = subProgress(p);
       const prog = total ? `<div class="subprog"><div class="bar"><span style="width:${Math.round(done/total*100)}%"></span></div><span class="cnt">${done}/${total}</span></div>` : "";
-      return `<tr data-open="${esc(p.id)}" tabindex="0"><td data-label="Project"><span class="rowid">${idMap.get(p.id)}</span><div class="tname">${esc(p.name)}</div>${p.notes ? `<div class="tnotes">${esc(p.notes)}</div>` : ""}${prog}</td><td data-label="Status">${pill(p.status)}</td><td data-label="Owner"><span class="owner">${avatar(p.owner)}${esc(p.owner || "Unassigned")}</span></td><td data-label="Priority">${prioHtml(p.priority)}</td><td data-label="Due">${dueHtml(p)}</td></tr>`;
+      const isDone = p.status === "done";
+      return `<tr data-open="${esc(p.id)}" tabindex="0"><td data-label="Project"><div class="projcell"><button type="button" class="rowcheck${isDone ? " done" : ""}" data-toggle="${esc(p.id)}" aria-label="${isDone ? "Mark not done" : "Mark done"}">${checkIcon}</button><div class="projtext"><span class="rowid">${idMap.get(p.id)}</span><span class="tname">${esc(p.name)}</span>${p.notes ? `<div class="tnotes">${esc(p.notes)}</div>` : ""}${prog}</div></div></td><td data-label="Status">${pill(p.status)}</td><td data-label="Owner"><span class="owner">${avatar(p.owner)}${esc(p.owner || "Unassigned")}</span></td><td data-label="Priority">${prioHtml(p.priority)}</td><td data-label="Due">${dueHtml(p)}</td></tr>`;
     }).join("");
     return `<div class="tablewrap"><table><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
@@ -552,9 +559,22 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   $("#clearBtn").onclick = () => clearFilters();
   function clearFilters(){ state.owner = null; state.status = null; state.q = ""; $("#q").value = ""; store.set("owner", null); store.set("status", null); render(); }
 
+  async function toggleDone(id){
+    const p = state.projects.find(x => x.id === id);
+    if (!p || !state.canWrite || !state.sb) return;
+    const next = p.status === "done" ? "not_started" : "done";
+    const prevStatus = p.status;
+    p.status = next; render(); // optimistic
+    try {
+      const { error } = await state.sb.from("projects").update({ status: next, updated_at: new Date().toISOString() }).eq("id", id);
+      if (error) throw error;
+    } catch (e) { p.status = prevStatus; render(); toast(dbErr(e)); }
+  }
+
   document.addEventListener("click", e => {
-    const t = e.target.closest("[data-owner],[data-status],[data-sort],[data-open],[data-new],[data-clear]");
+    const t = e.target.closest("[data-owner],[data-status],[data-sort],[data-open],[data-new],[data-clear],[data-toggle]");
     if (!t) return;
+    if (t.dataset.toggle !== undefined) { toggleDone(t.dataset.toggle); return; }
     if (t.dataset.owner !== undefined) { state.owner = t.dataset.owner || null; store.set("owner", state.owner); render(); }
     else if (t.dataset.status !== undefined) { const v = t.dataset.status || null; state.status = (t.classList.contains("stat") && state.status === v) ? null : v; store.set("status", state.status); render(); }
     else if (t.dataset.sort) { const k = t.dataset.sort; state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : 1 }; store.set("sort", state.sort); render(); }
