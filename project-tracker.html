@@ -108,13 +108,34 @@ button{cursor:pointer}
 .stat .val{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
 .overdue{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surface);min-width:0}
 .overdue.has{border-color:color-mix(in srgb,var(--danger) 35%,var(--line));background:color-mix(in srgb,var(--danger-bg) 55%,var(--surface))}
+.overdue.soon{border-color:color-mix(in srgb,var(--st-bl) 35%,var(--line));background:color-mix(in srgb,var(--st-bl-bg) 55%,var(--surface))}
 .overdue .lbl{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px}
 .overdue .lbl b{font-variant-numeric:tabular-nums;color:var(--danger)}
 .overdue ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
 .overdue li button{width:100%;display:flex;gap:10px;align-items:baseline;border:0;background:transparent;padding:3px 0;text-align:left;min-width:0}
 .overdue li .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
 .overdue li .ago{font-family:var(--mono);font-size:11.5px;color:var(--danger);white-space:nowrap}
+.overdue li .ago.soon{color:var(--st-bl)}
 .overdue .ok{margin:6px 0 0;color:var(--fg-2);font-size:13px}
+
+/* subtask progress (table) */
+.subprog{display:flex;align-items:center;gap:7px;margin-top:5px}
+.subprog .bar{flex:1;max-width:90px;height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;flex:none}
+.subprog .bar span{display:block;height:100%;background:var(--accent)}
+.subprog .cnt{font-size:11px;color:var(--fg-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* subtask editor */
+.subtasks{display:flex;flex-direction:column;gap:6px}
+.subtask-row{display:flex;align-items:center;gap:8px}
+.subtask-row input[type="checkbox"]{width:16px;height:16px;flex:none;accent-color:var(--accent)}
+.subtask-row input[type="text"]{flex:1;min-width:0;border:1px solid var(--line-strong);border-radius:8px;padding:7px 9px;background:var(--surface)}
+.subtask-row input[type="text"].done{text-decoration:line-through;color:var(--fg-3)}
+.subtask-row .rm{border:0;background:transparent;color:var(--fg-3);width:26px;height:26px;border-radius:7px;display:grid;place-items:center;flex:none}
+.subtask-row .rm:hover{background:var(--surface-2);color:var(--danger)}
+.subtask-row .rm svg{width:14px;height:14px;stroke:currentColor}
+.subtask-add{display:flex;gap:8px;margin-top:2px}
+.subtask-add input{flex:1;min-width:0}
+.subtask-empty{color:var(--fg-3);font-size:12.5px}
 
 /* filter bar */
 .filterbar{display:flex;align-items:center;justify-content:flex-end}
@@ -148,7 +169,20 @@ tbody tr:hover td{background:var(--surface-2)}
 .owner{display:flex;align-items:center;gap:8px;white-space:nowrap}
 .due{white-space:nowrap;font-variant-numeric:tabular-nums}
 .due.late{color:var(--danger);font-weight:600}
+.due.soon{color:var(--st-bl);font-weight:600}
 .due small{display:block;font-family:var(--mono);font-size:11px;color:var(--danger);font-weight:500}
+.due.soon small{color:var(--st-bl)}
+
+/* card layout on phones instead of a cramped table */
+@media (max-width:680px){
+  table{min-width:0}
+  thead{display:none}
+  tbody tr{display:block;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+  tbody tr:last-child{margin-bottom:0}
+  td{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:0;padding:6px 0}
+  td:first-child{flex-direction:column;align-items:flex-start;gap:2px;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  td[data-label]::before{content:attr(data-label);font-size:11px;font-weight:600;color:var(--fg-3);text-transform:uppercase;letter-spacing:.04em}
+}
 
 /* empty / notices */
 .empty{border:1px dashed var(--line-strong);border-radius:16px;padding:40px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
@@ -220,6 +254,14 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
         <div class="field"><label for="f-status">Status</label><select id="f-status"></select></div>
         <div class="field"><label for="f-prio">Priority</label><select id="f-prio"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
       </div>
+      <div class="field">
+        <label>Tasks</label>
+        <div class="subtasks" id="subtaskList"></div>
+        <div class="subtask-add">
+          <input id="f-subtask-new" type="text" maxlength="200" placeholder="Add a task">
+          <button class="btn" id="subtaskAddBtn" type="button">Add</button>
+        </div>
+      </div>
       <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" maxlength="4000" placeholder="Context, links, next steps"></textarea></div>
       <p class="err" id="edErr" hidden></p>
     </form>
@@ -269,7 +311,11 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   const todayStr = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
   const dayDiff = (a, b) => Math.round((Date.parse(a+"T00:00:00") - Date.parse(b+"T00:00:00")) / 864e5);
   const isLate = p => p.due && p.status !== "done" && p.due < todayStr();
+  const DUE_SOON_DAYS = 3;
+  const isDueSoon = p => { if (!p.due || p.status === "done" || isLate(p)) return false; const d = dayDiff(p.due, todayStr()); return d >= 0 && d <= DUE_SOON_DAYS; };
   const fmtDate = s => s ? new Date(s+"T00:00:00").toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"}) : "—";
+  const subProgress = p => { const items = Array.isArray(p.subtasks) ? p.subtasks : []; return { done: items.filter(t => t.done).length, total: items.length }; };
+  const newId = () => (window.crypto?.randomUUID ? crypto.randomUUID() : "t" + Date.now() + Math.random().toString(16).slice(2));
   const initials = n => (n||"?").trim().split(/\s+/).slice(0,2).map(w => w[0]).join("").toUpperCase() || "?";
   const avColor = n => { let h = 0; for (const c of (n||"")) h = (h*31 + c.charCodeAt(0)) >>> 0; return AV[h % AV.length]; };
   const avatar = n => n ? `<span class="av" style="background:${avColor(n)}">${esc(initials(n))}</span>` : `<span class="av" style="background:var(--fg-3)">?</span>`;
@@ -278,12 +324,13 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   const dueHtml = p => {
     if (!p.due) return `<span class="due" style="color:var(--fg-3)">No date</span>`;
     if (isLate(p)) { const d = dayDiff(todayStr(), p.due); return `<span class="due late">${esc(fmtDate(p.due))}<small>${d}d overdue</small></span>`; }
+    if (isDueSoon(p)) { const d = dayDiff(p.due, todayStr()); return `<span class="due soon">${esc(fmtDate(p.due))}<small>${d === 0 ? "due today" : `due in ${d}d`}</small></span>`; }
     return `<span class="due">${esc(fmtDate(p.due))}</span>`;
   };
 
   function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2200); }
   function setSync(ok, text){ const s = $("#sync"); s.classList.toggle("off", !ok); s.querySelector("span").textContent = text; }
-  const mapRow = r => ({ id: r.id, name: r.name, owner: r.owner, due: r.due || "", status: r.status, priority: r.priority, notes: r.notes || "", updatedAt: r.updated_at ? Date.parse(r.updated_at) : null });
+  const mapRow = r => ({ id: r.id, name: r.name, owner: r.owner, due: r.due || "", status: r.status, priority: r.priority, notes: r.notes || "", subtasks: Array.isArray(r.subtasks) ? r.subtasks : [], updatedAt: r.updated_at ? Date.parse(r.updated_at) : null });
 
   function owners(){
     const m = new Map();
@@ -294,7 +341,7 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
     const q = state.q.trim().toLowerCase();
     let list = state.projects.filter(p =>
       (!state.owner || (state.owner === "__none" ? !(p.owner||"").trim() : (p.owner||"").trim() === state.owner)) &&
-      (!state.status || (state.status === "__late" ? isLate(p) : p.status === state.status)) &&
+      (!state.status || (state.status === "__late" ? isLate(p) : state.status === "__soon" ? isDueSoon(p) : p.status === state.status)) &&
       (!q || (p.name||"").toLowerCase().includes(q) || (p.notes||"").toLowerCase().includes(q) || (p.owner||"").toLowerCase().includes(q)));
     const {key, dir} = state.sort;
     const val = p => key === "priority" ? (PRIO[p.priority]?.rank ?? 1)
@@ -312,6 +359,7 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
     let s = `<button class="fitem" type="button" data-status="" aria-pressed="${!state.status}"><span class="dot" style="background:var(--fg-3)"></span>Any status</button>`;
     for (const st of STATUSES) s += `<button class="fitem" type="button" data-status="${st.id}" aria-pressed="${state.status === st.id}"><span class="dot" style="background:${st.color}"></span>${st.label}<span class="n">${state.projects.filter(p => p.status === st.id).length}</span></button>`;
     s += `<button class="fitem" type="button" data-status="__late" aria-pressed="${state.status === "__late"}"><span class="dot" style="background:var(--danger)"></span>Overdue<span class="n">${state.projects.filter(isLate).length}</span></button>`;
+    s += `<button class="fitem" type="button" data-status="__soon" aria-pressed="${state.status === "__soon"}"><span class="dot" style="background:var(--st-bl)"></span>Due soon<span class="n">${state.projects.filter(isDueSoon).length}</span></button>`;
     $("#statusFilters").innerHTML = s;
     $("#ownerList").innerHTML = os.map(([o]) => `<option value="${esc(o)}"></option>`).join("");
     $("#clearBtn").hidden = !(state.owner || state.status || state.q);
@@ -319,13 +367,21 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
 
   function renderSummary(){
     const late = state.projects.filter(isLate).sort((a,b) => a.due.localeCompare(b.due));
+    const soon = state.projects.filter(isDueSoon).sort((a,b) => a.due.localeCompare(b.due));
+    const attention = [...late.map(p => ({p, late: true})), ...soon.map(p => ({p, late: false}))];
     let h = STATUSES.map(st => `<button class="stat" type="button" data-status="${st.id}"><span class="lbl"><span class="dot" style="background:${st.color}"></span>${st.label}</span><span class="val">${state.projects.filter(p => p.status === st.id).length}</span></button>`).join("");
-    h += `<div class="overdue ${late.length ? "has" : ""}"><div class="lbl"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${late.length ? "var(--danger)" : "var(--st-dn)"}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overdue <b>${late.length || ""}</b></div>`;
+    const panelClass = late.length ? "has" : soon.length ? "soon" : "";
+    const iconColor = late.length ? "var(--danger)" : soon.length ? "var(--st-bl)" : "var(--st-dn)";
+    h += `<div class="overdue ${panelClass}"><div class="lbl"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Needs attention <b>${attention.length || ""}</b></div>`;
     if (!state.loaded) h += `<p class="ok">Loading…</p>`;
-    else if (!late.length) h += `<p class="ok">Nothing overdue. Every open project is on schedule.</p>`;
+    else if (!attention.length) h += `<p class="ok">Nothing overdue or due soon. Every open project is on schedule.</p>`;
     else {
-      h += `<ul>` + late.slice(0,4).map(p => `<li><button type="button" data-open="${esc(p.id)}"><span class="nm">${esc(p.name)}</span><span style="color:var(--fg-2);font-size:12.5px;white-space:nowrap">${esc(p.owner||"Unassigned")}</span><span class="ago">${dayDiff(todayStr(), p.due)}d late</span></button></li>`).join("") + `</ul>`;
-      if (late.length > 4) h += `<button class="clear" type="button" data-status="__late" style="border:0;background:transparent;color:var(--accent);padding:4px 0 0;font-size:13px">Show all ${late.length} overdue</button>`;
+      h += `<ul>` + attention.slice(0,4).map(({p, late}) => {
+        const d = dayDiff(late ? todayStr() : p.due, late ? p.due : todayStr());
+        const tag = late ? `${d}d late` : d === 0 ? "due today" : `due in ${d}d`;
+        return `<li><button type="button" data-open="${esc(p.id)}"><span class="nm">${esc(p.name)}</span><span style="color:var(--fg-2);font-size:12.5px;white-space:nowrap">${esc(p.owner||"Unassigned")}</span><span class="ago${late ? "" : " soon"}">${tag}</span></button></li>`;
+      }).join("") + `</ul>`;
+      if (attention.length > 4) h += `<button class="clear" type="button" data-status="__late" style="border:0;background:transparent;color:var(--accent);padding:4px 0 0;font-size:13px">Show all ${attention.length}</button>`;
     }
     $("#summary").innerHTML = h + `</div>`;
     const open = state.projects.filter(p => p.status !== "done").length;
@@ -342,7 +398,11 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
     if (!list.length) return emptyState();
     const cols = [["name","Project"],["status","Status"],["owner","Owner"],["priority","Priority"],["due","Due"]];
     const th = cols.map(([k,l]) => `<th><button type="button" data-sort="${k}" data-active="${state.sort.key === k}">${l}${state.sort.key === k ? (state.sort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`).join("");
-    const rows = list.map(p => `<tr data-open="${esc(p.id)}" tabindex="0"><td><div class="tname">${esc(p.name)}</div>${p.notes ? `<div class="tnotes">${esc(p.notes)}</div>` : ""}</td><td>${pill(p.status)}</td><td><span class="owner">${avatar(p.owner)}${esc(p.owner || "Unassigned")}</span></td><td>${prioHtml(p.priority)}</td><td>${dueHtml(p)}</td></tr>`).join("");
+    const rows = list.map(p => {
+      const { done, total } = subProgress(p);
+      const prog = total ? `<div class="subprog"><div class="bar"><span style="width:${Math.round(done/total*100)}%"></span></div><span class="cnt">${done}/${total}</span></div>` : "";
+      return `<tr data-open="${esc(p.id)}" tabindex="0"><td data-label="Project"><div class="tname">${esc(p.name)}</div>${p.notes ? `<div class="tnotes">${esc(p.notes)}</div>` : ""}${prog}</td><td data-label="Status">${pill(p.status)}</td><td data-label="Owner"><span class="owner">${avatar(p.owner)}${esc(p.owner || "Unassigned")}</span></td><td data-label="Priority">${prioHtml(p.priority)}</td><td data-label="Due">${dueHtml(p)}</td></tr>`;
+    }).join("");
     return `<div class="tablewrap"><table><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
@@ -356,16 +416,53 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   // ---- editor
   $("#f-status").innerHTML = STATUSES.map(s => `<option value="${s.id}">${s.label}</option>`).join("");
   let pendingDelete = false;
+  let editSubtasks = [];
+  function renderSubtaskEditor(){
+    const box = $("#subtaskList");
+    if (!editSubtasks.length) { box.innerHTML = `<p class="subtask-empty">No tasks yet.</p>`; return; }
+    box.innerHTML = editSubtasks.map((t, i) => `<div class="subtask-row" data-idx="${i}">
+      <input type="checkbox" data-sub-toggle ${t.done ? "checked" : ""} aria-label="Mark done">
+      <input type="text" data-sub-text class="${t.done ? "done" : ""}" value="${esc(t.text)}" maxlength="200">
+      <button class="rm" type="button" data-sub-remove aria-label="Remove task"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>`).join("");
+  }
+  function addSubtask(){
+    const inp = $("#f-subtask-new");
+    const text = inp.value.trim();
+    if (!text) return;
+    editSubtasks.push({ id: newId(), text, done: false });
+    inp.value = "";
+    renderSubtaskEditor();
+    inp.focus();
+  }
+  $("#subtaskAddBtn").onclick = addSubtask;
+  $("#f-subtask-new").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addSubtask(); } });
+  $("#subtaskList").addEventListener("input", e => {
+    const row = e.target.closest(".subtask-row"); if (!row) return;
+    const i = Number(row.dataset.idx);
+    if (e.target.matches("[data-sub-text]")) editSubtasks[i].text = e.target.value;
+  });
+  $("#subtaskList").addEventListener("change", e => {
+    const row = e.target.closest(".subtask-row"); if (!row) return;
+    const i = Number(row.dataset.idx);
+    if (e.target.matches("[data-sub-toggle]")) { editSubtasks[i].done = e.target.checked; renderSubtaskEditor(); }
+  });
+  $("#subtaskList").addEventListener("click", e => {
+    const row = e.target.closest(".subtask-row"); if (!row) return;
+    if (e.target.closest("[data-sub-remove]")) { editSubtasks.splice(Number(row.dataset.idx), 1); renderSubtaskEditor(); }
+  });
   function openEditor(p, status){
     state.editing = p ? p.id : null; pendingDelete = false;
     $("#edTitle").textContent = p ? "Edit project" : "New project";
     $("#f-name").value = p?.name || ""; $("#f-owner").value = p?.owner || (state.owner && state.owner !== "__none" ? state.owner : "");
     $("#f-due").value = p?.due || ""; $("#f-status").value = p?.status || status || "not_started";
     $("#f-prio").value = p?.priority || "medium"; $("#f-notes").value = p?.notes || "";
+    editSubtasks = (p?.subtasks || []).map(t => ({ ...t })); renderSubtaskEditor(); $("#f-subtask-new").value = "";
     $("#edErr").hidden = true;
     $("#edDelete").hidden = !p || !state.canWrite; $("#edDelete").textContent = "Delete";
     $("#edStamp").textContent = p?.updatedAt ? "Last updated " + new Date(p.updatedAt).toLocaleString(undefined, {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) : "";
     for (const el of document.querySelectorAll("#edForm input,#edForm select,#edForm textarea")) el.disabled = !state.canWrite;
+    $("#subtaskAddBtn").disabled = !state.canWrite;
     $("#edSave").hidden = !state.canWrite;
     $("#scrim").hidden = false; setTimeout(() => $("#f-name").focus(), 30);
   }
@@ -380,7 +477,8 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   async function save(){
     const name = $("#f-name").value.trim();
     if (!name) { showErr("Give the project a name."); $("#f-name").focus(); return; }
-    const row = { name, owner: $("#f-owner").value.trim(), due: $("#f-due").value || null, status: $("#f-status").value, priority: $("#f-prio").value, notes: $("#f-notes").value.trim(), updated_at: new Date().toISOString() };
+    const subtasks = editSubtasks.map(t => ({ id: t.id, text: t.text.trim(), done: !!t.done })).filter(t => t.text);
+    const row = { name, owner: $("#f-owner").value.trim(), due: $("#f-due").value || null, status: $("#f-status").value, priority: $("#f-prio").value, notes: $("#f-notes").value.trim(), subtasks, updated_at: new Date().toISOString() };
     $("#edSave").disabled = true;
     try {
       const { error } = state.editing

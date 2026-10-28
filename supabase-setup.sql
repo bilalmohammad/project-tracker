@@ -11,6 +11,7 @@ create table if not exists public.projects (
   priority text not null default 'medium' check (priority in ('high','medium','low')),
   due date,
   notes text,
+  subtasks jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
