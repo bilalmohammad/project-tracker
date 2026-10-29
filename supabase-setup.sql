@@ -16,26 +16,29 @@ create table if not exists public.projects (
   updated_at timestamptz not null default now()
 );
 
--- Row Level Security must be on for the anon key to be used safely.
 alter table public.projects enable row level security;
 
--- Starting point: anyone holding the anon key (i.e. anyone who can load the
--- page) can read and write. This is fine behind a company-only subdomain
--- that nobody outside the org can reach. If the page will ever be reachable
--- from the open internet, replace these with Supabase Auth–based policies
--- (e.g. restrict by authenticated users with your company's email domain)
--- before relying on it.
-create policy "anon can read projects" on public.projects
-  for select using (true);
+-- Access control: only people who are signed in (via the magic-link email
+-- sign-in flow) can read or write. Nobody can sign in unless you've invited
+-- them from the Supabase dashboard (Authentication → Users → Invite user)
+-- with "Allow new users to sign up" turned OFF, so this is effectively a
+-- private tool limited to your invited teammates.
+drop policy if exists "anon can read projects" on public.projects;
+drop policy if exists "anon can insert projects" on public.projects;
+drop policy if exists "anon can update projects" on public.projects;
+drop policy if exists "anon can delete projects" on public.projects;
 
-create policy "anon can insert projects" on public.projects
-  for insert with check (true);
+create policy "authenticated can read projects" on public.projects
+  for select using (auth.role() = 'authenticated');
 
-create policy "anon can update projects" on public.projects
-  for update using (true);
+create policy "authenticated can insert projects" on public.projects
+  for insert with check (auth.role() = 'authenticated');
 
-create policy "anon can delete projects" on public.projects
-  for delete using (true);
+create policy "authenticated can update projects" on public.projects
+  for update using (auth.role() = 'authenticated');
+
+create policy "authenticated can delete projects" on public.projects
+  for delete using (auth.role() = 'authenticated');
 
 -- Enable realtime updates for this table.
 alter publication supabase_realtime add table public.projects;
