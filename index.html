@@ -115,8 +115,10 @@ button{cursor:pointer}
 
 /* main */
 .main{padding:22px 26px 30px;min-width:0;display:flex;flex-direction:column;gap:18px;
-  padding-right:max(26px,env(safe-area-inset-right,0px));padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
-@media (max-width:600px){.main{padding:16px 16px 24px}}
+  padding-right:max(26px,env(safe-area-inset-right,0px));
+  /* leave room for the floating composer */
+  padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+@media (max-width:600px){.main{padding:16px 16px calc(130px + env(safe-area-inset-bottom,0px))}}
 .head{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
 .head h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
 .head p{margin:4px 0 0;color:var(--fg-2)}
@@ -246,6 +248,24 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
 .stamp{font-size:12px;color:var(--fg-3);padding:0 22px 12px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--ink-fg);padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;z-index:30;box-shadow:var(--shadow)}
 
+/* quick-assign composer, floating at the bottom */
+.composer{position:fixed;left:50%;transform:translateX(-50%);z-index:25;width:min(640px,calc(100% - 32px));
+  bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+.composer form{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-strong);
+  border-radius:var(--radius);padding:8px 8px 8px 12px}
+.composer form:focus-within{border-color:var(--ink)}
+.composer input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:14px;padding:4px 0}
+.composer .send{flex:none;display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:var(--radius-sm);
+  background:var(--ink);color:var(--ink-fg)}
+.composer .send svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.composer .send[disabled]{opacity:.35;cursor:not-allowed}
+.cpreview{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:7px;padding:0 2px}
+.cchip{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius-sm);padding:3px 8px;font-size:12px;color:var(--fg-2);white-space:nowrap}
+.cchip b{font-weight:600;color:var(--fg)}
+.chint{font-size:12px;color:var(--fg-3);padding:0 2px}
+@media (max-width:860px){.composer{width:calc(100% - 24px)}}
+
 /* auth gate */
 .authgate{position:fixed;inset:0;background:var(--canvas);display:flex;align-items:center;justify-content:center;z-index:40;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -315,6 +335,16 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
       </div>
       <div id="view"></div>
     </main>
+    <div class="composer" id="composer" hidden>
+      <div class="cpreview" id="cPreview"></div>
+      <form id="cForm" novalidate>
+        <input id="cInput" type="text" maxlength="200" autocomplete="off"
+               placeholder="Assign work — e.g. Draft Q4 deck @Priya !high by friday">
+        <button class="send" type="submit" id="cSend" disabled aria-label="Assign">
+          <svg viewBox="0 0 24 24"><path d="M4.5 12h14M13 6.5 18.5 12 13 17.5"/></svg>
+        </button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -636,6 +666,45 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   $("#clearBtn").onclick = () => clearFilters();
   function clearFilters(){ state.owner = null; state.status = null; state.q = ""; $("#q").value = ""; store.set("owner", null); store.set("status", null); render(); }
 
+  function renderComposerPreview(){
+    const txt = $("#cInput").value;
+    const box = $("#cPreview");
+    if (!txt.trim()) {
+      box.innerHTML = `<span class="chint">@owner · !high !blocked · "by friday", "5 nov", "tomorrow"</span>`;
+      $("#cSend").disabled = true; return;
+    }
+    const p = parseAssign(txt, owners().map(([o]) => o));
+    $("#cSend").disabled = !p.name;
+    const chips = [];
+    chips.push(`<span class="cchip">${p.name ? `<b>${esc(p.name)}</b>` : "name needed"}</span>`);
+    chips.push(`<span class="cchip">${avatar(p.owner)}<b>${esc(p.owner || "Unassigned")}</b></span>`);
+    chips.push(`<span class="cchip">${pill(p.status)}</span>`);
+    chips.push(`<span class="cchip">${prioHtml(p.priority)}</span>`);
+    if (p.due) chips.push(`<span class="cchip">Due <b>${esc(fmtDate(p.due))}</b></span>`);
+    box.innerHTML = chips.join("");
+  }
+
+  async function submitComposer(){
+    const txt = $("#cInput").value;
+    const p = parseAssign(txt, owners().map(([o]) => o));
+    if (!p.name || !state.sb || !state.canWrite) return;
+    $("#cSend").disabled = true;
+    try {
+      const row = { name: p.name, owner: p.owner || null, due: p.due || null, status: p.status,
+                    priority: p.priority, notes: null, subtasks: [], updated_at: new Date().toISOString() };
+      const { data, error } = await state.sb.from("projects").insert([row]).select();
+      if (error) throw error;
+      if (data && data[0]) { state.projects.push(mapRow(data[0])); render(); }
+      $("#cInput").value = ""; renderComposerPreview();
+      toast(p.owner ? `Assigned to ${p.owner}` : "Project added");
+    } catch (e) { toast(dbErr(e)); }
+    finally { renderComposerPreview(); $("#cInput").focus(); }
+  }
+
+  $("#cInput").addEventListener("input", renderComposerPreview);
+  $("#cForm").addEventListener("submit", e => { e.preventDefault(); submitComposer(); });
+  renderComposerPreview();
+
   async function toggleDone(id){
     const p = state.projects.find(x => x.id === id);
     if (!p || !state.canWrite || !state.sb) return;
@@ -662,9 +731,101 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
 
   render();
 
+  // ---- quick-assign composer
+  // Parses one typed line into a project. Everything is optional except the name:
+  //   "@priya"            -> owner (matched against existing owners first)
+  //   "!high !blocked"    -> priority / status
+  //   "by friday", "5 nov", "2026-11-05", "tomorrow" -> due date
+  const DOW = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+  const MON = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+  const PRIO_WORDS = { high:"high", h:"high", urgent:"high", med:"medium", medium:"medium", m:"medium", low:"low", l:"low" };
+  const STATUS_WORDS = { blocked:"blocked", waiting:"blocked", done:"done", complete:"done", wip:"in_progress", inprogress:"in_progress", progress:"in_progress", started:"in_progress", notstarted:"not_started", todo:"not_started" };
+
+  function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+
+  // Returns {date, length} for a date phrase starting at words[i], or null.
+  function matchDate(words, i, today){
+    const w = (words[i] || "").toLowerCase().replace(/[.,]/g, "");
+    const w2 = (words[i+1] || "").toLowerCase().replace(/[.,]/g, "");
+    const add = n => { const d = new Date(today); d.setDate(d.getDate() + n); return d; };
+
+    if (w === "today" || w === "eod") return { date: add(0), length: 1 };
+    if (w === "tomorrow" || w === "tmrw") return { date: add(1), length: 1 };
+    if (w === "eow") { const diff = (5 - today.getDay() + 7) % 7; return { date: add(diff), length: 1 }; }
+    if (w === "next" && w2 === "week") return { date: add(7), length: 2 };
+
+    // A weekday means its next occurrence; "today" counts as that day.
+    // "next <weekday>" is the same, except it skips a week when it lands on today.
+    const dowIdx = n => DOW.findIndex(d => d === n || d.slice(0,3) === n);
+    if (w === "next" && dowIdx(w2) >= 0) {
+      const diff = (dowIdx(w2) - today.getDay() + 7) % 7;
+      return { date: add(diff === 0 ? 7 : diff), length: 2 };
+    }
+    if (dowIdx(w) >= 0) { const diff = (dowIdx(w) - today.getDay() + 7) % 7; return { date: add(diff), length: 1 }; }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(w)) { const d = new Date(w + "T00:00:00"); return isNaN(d) ? null : { date: d, length: 1 }; }
+
+    const dmy = w.match(/^(\d{1,2})[\/.](\d{1,2})(?:[\/.](\d{2,4}))?$/); // d/m or d/m/y
+    if (dmy) {
+      let [, dd, mm, yy] = dmy;
+      let year = yy ? (yy.length === 2 ? 2000 + +yy : +yy) : today.getFullYear();
+      const d = new Date(year, +mm - 1, +dd);
+      if (d.getMonth() !== +mm - 1) return null;
+      if (!yy && d < today) d.setFullYear(year + 1);
+      return { date: d, length: 1 };
+    }
+
+    const monIdx = n => MON.findIndex(m => n.slice(0,3) === m);
+    const mkMonthDay = (monthName, dayStr, len) => {
+      const mi = monIdx(monthName), dd = parseInt(dayStr, 10);
+      if (mi < 0 || !(dd >= 1 && dd <= 31)) return null;
+      const d = new Date(today.getFullYear(), mi, dd);
+      if (d.getMonth() !== mi) return null;
+      if (d < today) d.setFullYear(today.getFullYear() + 1);
+      return { date: d, length: len };
+    };
+    if (/^\d{1,2}(st|nd|rd|th)?$/.test(w) && w2) return mkMonthDay(w2, w.replace(/\D/g,""), 2); // "5 nov"
+    if (/^[a-z]{3,}$/.test(w) && /^\d{1,2}(st|nd|rd|th)?$/.test(w2)) return mkMonthDay(w, w2.replace(/\D/g,""), 2); // "nov 5"
+    return null;
+  }
+
+  function parseAssign(text, knownOwners, today){
+    today = today || new Date(new Date().toDateString());
+    const words = String(text).trim().split(/\s+/).filter(Boolean);
+    const out = { name: "", owner: "", priority: "medium", status: "not_started", due: "" };
+    const nameWords = [];
+    for (let i = 0; i < words.length; i++) {
+      const raw = words[i];
+      const bare = raw.replace(/[.,!]+$/, "");
+      if (raw.startsWith("@") && raw.length > 1) {
+        const tok = raw.slice(1).replace(/[.,]+$/, "");
+        const hit = (knownOwners || []).find(o => o.toLowerCase() === tok.toLowerCase())
+          || (knownOwners || []).find(o => o.toLowerCase().startsWith(tok.toLowerCase()));
+        out.owner = hit || tok;
+        continue;
+      }
+      if (raw.startsWith("!") && raw.length > 1) {
+        const tok = raw.slice(1).toLowerCase().replace(/[^a-z]/g, "");
+        if (PRIO_WORDS[tok]) { out.priority = PRIO_WORDS[tok]; continue; }
+        if (STATUS_WORDS[tok]) { out.status = STATUS_WORDS[tok]; continue; }
+        continue; // unknown !tag: drop it rather than leaving it in the title
+      }
+      const lead = bare.toLowerCase();
+      if (lead === "by" || lead === "due") {
+        const m = matchDate(words, i + 1, today);
+        if (m) { out.due = iso(m.date); i += m.length; continue; }
+      }
+      const m = matchDate(words, i, today);
+      if (m) { out.due = iso(m.date); i += m.length - 1; continue; }
+      nameWords.push(raw);
+    }
+    out.name = nameWords.join(" ").replace(/\s+/g, " ").trim();
+    return out;
+  }
+
   // ---- auth gate
-  function showGate(){ $("#authGate").hidden = false; $("#authUser").hidden = true; }
-  function hideGate(){ $("#authGate").hidden = true; }
+  function showGate(){ $("#authGate").hidden = false; $("#authUser").hidden = true; $("#composer").hidden = true; }
+  function hideGate(){ $("#authGate").hidden = true; $("#composer").hidden = false; }
   function setGateMsg(text, isErr){ const m = $("#authMsg"); m.textContent = text; m.hidden = false; m.classList.toggle("err", !!isErr); }
   function showUser(email){ $("#authUser").hidden = false; $("#authUserEmail").textContent = email || ""; }
 
