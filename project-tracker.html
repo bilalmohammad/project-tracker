@@ -433,7 +433,8 @@ form.fields{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overfl
   const fmtDate = s => s ? new Date(s+"T00:00:00").toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"}) : "—";
   const subProgress = p => { const items = Array.isArray(p.subtasks) ? p.subtasks : []; return { done: items.filter(t => t.done).length, total: items.length }; };
   const newId = () => (window.crypto?.randomUUID ? crypto.randomUUID() : "t" + Date.now() + Math.random().toString(16).slice(2));
-  const initials = n => (n||"?").trim().split(/\s+/).slice(0,2).map(w => w[0]).join("").toUpperCase() || "?";
+  // Shared owners arrive as "Ram (7Eagles) / Gautam" — drop the bracketed note, then take the first two names.
+  const initials = n => (n||"").replace(/\([^)]*\)/g, " ").split(/[^A-Za-z]+/).filter(Boolean).slice(0,2).map(w => w[0]).join("").toUpperCase() || "?";
   const avColor = n => { let h = 0; for (const c of (n||"")) h = (h*31 + c.charCodeAt(0)) >>> 0; return AV[h % AV.length]; };
   const avatar = n => n ? `<span class="av" style="background:${avColor(n)}">${esc(initials(n))}</span>` : `<span class="av" style="background:var(--fg-3)">?</span>`;
   const prioHtml = p => { const k = PRIO[p] ? p : "medium"; return `<span class="prio p-${k}">${PRIO_BAR(k)}${PRIO[k].label}</span>`; };
